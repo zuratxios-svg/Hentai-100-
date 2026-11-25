@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Free Fire OB55 Precision Aimlock Engine v19.0</title>
+    <style>
+        :root {
+            --bg: #020307;
+            --card: #080c18;
+            --border: #1e293b;
+            --super-red: #ff003c;
+            --super-glow: rgba(255, 0, 60, 0.6);
+            --promax-gold: #ffaa00;
+            --pro-cyan: #00f0ff;
+            --text: #f8fafc;
+            --text-dim: #94a3b8;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif; }
+        body { background-color: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; justify-content: space-between; overflow-x: hidden; }
+        
+        .container { max-width: 1000px; margin: 0 auto; padding: 20px; width: 100%; flex-grow: 1; display: flex; flex-direction: column; gap: 20px; }
+        
+        header { text-align: center; padding: 15px 0; }
+        .badge { display: inline-block; padding: 6px 16px; border-radius: 50px; background: rgba(255, 0, 60, 0.15); border: 1px solid rgba(255, 0, 60, 0.5); color: var(--super-red); font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 10px; }
+        h1 { font-size: clamp(24px, 5vw, 42px); font-weight: 900; background: linear-gradient(135deg, #ffffff, #ff4d6d, #ff003c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 6px; }
+        p.subtitle { color: var(--text-dim); font-size: 13px; max-width: 640px; margin: 0 auto; font-weight: 600; }
+
+        .card { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.7); }
+        
+        .search-box { position: relative; margin-top: 12px; }
+        .search-input { width: 100%; padding: 16px 20px 16px 45px; background: #040711; border: 1px solid var(--border); border-radius: 14px; color: #fff; font-size: 15px; font-weight: 700; outline: none; transition: 0.2s; }
+        .search-input:focus { border-color: var(--super-red); box-shadow: 0 0 25px var(--super-glow); }
+        .search-icon { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--text-dim); }
+        .search-btn { position: absolute; right: 6px; top: 6px; bottom: 6px; padding: 0 22px; background: linear-gradient(135deg, #ff003c, #b30024); color: #fff; border: none; border-radius: 10px; font-weight: 900; font-size: 13px; cursor: pointer; transition: 0.2s; }
+        .search-btn:active { transform: scale(0.96); }
+
+        .suggestions { position: absolute; left: 0; right: 0; top: calc(100% + 8px); background: #060a14; border: 1px solid var(--border); border-radius: 14px; max-height: 240px; overflow-y: auto; z-index: 100; display: none; box-shadow: 0 15px 30px rgba(0,0,0,0.9); }
+        .suggestion-item { padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.03); cursor: pointer; font-size: 14px; }
+        .suggestion-item:hover { background: rgba(255, 0, 60, 0.12); }
+
+        .status-card { display: none; margin-top: 15px; padding: 16px; background: rgba(255, 0, 60, 0.08); border: 1px solid rgba(255, 0, 60, 0.35); border-radius: 16px; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+        .status-title { font-size: 11px; color: var(--super-red); font-weight: 900; text-transform: uppercase; letter-spacing: 1px; }
+        .status-name { font-size: 18px; font-weight: 900; color: #fff; }
+        .specs-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-top: 12px; width: 100%; }
+        .spec-item { background: rgba(0,0,0,0.5); padding: 10px 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.06); }
+        .spec-label { font-size: 10px; color: var(--text-dim); display: block; margin-bottom: 2px; font-weight: 600; }
+        .spec-val { font-size: 13px; font-weight: 800; color: var(--pro-cyan); }
+
+        .tier-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px; }
+        @media(max-width: 768px) { .tier-grid { grid-template-columns: repeat(2, 1fr); } }
+        .tier-btn { padding: 14px 10px; border-radius: 14px; border: 1px solid var(--border); background: var(--card); color: var(--text-dim); font-weight: 800; font-size: 12px; cursor: pointer; transition: 0.2s; text-align: center; }
+        .tier-btn.active[data-tier="super"] { background: linear-gradient(135deg, #ff003c, #990022); color: #fff; border-color: var(--super-red); box-shadow: 0 0 25px var(--super-glow); }
+        .tier-btn.active[data-tier="promax"] { background: linear-gradient(135deg, #ffaa00, #b37700); color: #fff; border-color: var(--promax-gold); box-shadow: 0 0 20px rgba(255,170,0,0.4); }
+        .tier-btn.active[data-tier="pro"] { background: linear-gradient(135deg, #00f0ff, #008899); color: #000; border-color: var(--pro-cyan); box-shadow: 0 0 20px rgba(0,240,255,0.4); }
+        .tier-btn.active[data-tier="normal"] { background: #334155; color: #fff; border-color: #64748b; }
+
+        .sliders-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; margin-top: 20px; }
+        .slider-card { background: rgba(4, 7, 17, 0.85); border: 1px solid var(--border); border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 8px; transition: 0.2s; }
+        .slider-card:hover { border-color: rgba(255,0,60,0.4); }
+        .slider-header { display: flex; justify-content: space-between; align-items: center; }
+        .slider-title { font-size: 14px; font-weight: 800; color: #fff; }
+        .slider-val { font-size: 18px; font-weight: 900; color: var(--super-red); background: rgba(255, 0, 60, 0.12); padding: 4px 12px; border-radius: 8px; border: 1px solid rgba(255, 0, 60, 0.3); }
+        .slider-desc { font-size: 11px; color: var(--text-dim); font-weight: 500; }
+        .progress-bar { width: 100%; height: 7px; background: #02040a; border-radius: 4px; overflow: hidden; border: 1px solid rgba(255,255,255,0.05); }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, #ff4d6d, #ff003c); border-radius: 4px; transition: width 0.3s ease; }
+
+        .copy-btn { width: 100%; padding: 16px; background: #1e293b; border: 1px solid #334155; color: #fff; border-radius: 14px; font-weight: 900; font-size: 14px; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 20px; }
+        .copy-btn:hover { background: #334155; border-color: var(--super-red); color: var(--super-red); }
+
+        footer { text-align: center; padding: 20px; font-size: 11px; color: var(--text-dim); border-top: 1px solid var(--border); font-weight: 600; }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <div class="badge">ĐỘ NHẠY SIÊU VIP OB55</div>
+            <h1>Tìm độ nhạy chuẩn từng thiết bị</h1>
+            <p class="subtitle">Thiết kế & phát triển bởi admin Zurat.</p>
+        </header>
+
+        <section class="card">
+            <h2 style="font-size: 16px; font-weight: 900; margin-bottom: 4px;">Xác Định Mẫu Máy</h2>
+            <p style="font-size: 12px; color: var(--text-dim); margin-bottom: 12px;">Nhập đúng thiết bị đang dùng để tìm độ nhạy.</p>
+            
+            <div class="search-box">
+                <span class="search-icon">🔍</span>
+                <input type="text" id="deviceInput" class="search-input" placeholder="VD: iPhone 15 Pro Max, iPhone XS Max, Samsung S24 Ultra, S4, Oppo..." autocomplete="off" oninput="handleInput(this.value)">
+                <button class="search-btn" onclick="analyzeDevice()">XÁC NHẬN</button>
+                <div id="suggestionsBox" class="suggestions"></div>
+            </div>
+
+            <div id="deviceStatusCard" class="status-card">
+                <div>
+                    <div class="status-title">Ô VĂN KÊ</div>
+                    <div id="verifiedDeviceName" class="status-name">---</div>
+                </div>
+                <div style="text-align: right;">
+                    <div classid="status-title">TRẠNG THÁI </div>
+                    <div style="font-size: 13px; font-weight: 900; color: #ff003c;">Ô SÌ KÊ</div>
+                </div>
+                <div class="specs-grid">
+                    <div class="spec-item"><span class="spec-label">Chipset</span><span id="specChip" class="spec-val">---</span></div>
+                    <div class="spec-item"><span class="spec-label">Màn Hình</span><span id="specScreen" class="spec-val">---</span></div>
+                    <div class="spec-item"><span class="spec-label">Tần Số Quét</span><span id="specHz" class="spec-val">---</span></div>
+                    <div class="spec-item"><span class="spec-label">DPI Đề Xuất</span><span id="specDpi" class="spec-val">---</span></div>
+                </div>
+            </div>
+        </section>
+
+        <section id="resultSection" class="card hidden">
+            <div class="tier-grid">
+                <button onclick="switchTier('normal')" id="tab-normal" data-tier="normal" class="tier-btn">1. THƯỜNG</button>
+                <button onclick="switchTier('pro')" id="tab-pro" data-tier="pro" class="tier-btn">2. PRO </button>
+                <button onclick="switchTier('promax')" id="tab-promax" data-tier="promax" class="tier-btn">3. PRO MAX</button>
+                <button onclick="switchTier('super')" id="tab-super" data-tier="super" class="tier-btn active">4. SUPER</button>
+            </div>
+
+            <div style="background: rgba(255,0,60,0.06); border: 1px solid rgba(255,0,60,0.3); border-radius: 16px; padding: 18px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+                <div>
+                    <div id="tierBadge" class="badge">SUPER</div>
+                    <h3 id="tierTitle" style="font-size: 20px; font-weight: 900; color: #fff;">Siêu Độ Nhạy Super</h3>
+                    <p id="tierDesc" style="font-size: 12px; color: var(--text-dim); margin-top: 4px; max-width: 620px;">Tối ưu hóa độ đầm ở Nhìn Quát kết hợp Red Dot chuẩn xác để ghim đạn liên tục vào đầu mà không bị giật ngược hay văng tâm qua đầu.</p>
+                </div>
+                <div style="background: rgba(0,0,0,0.6); border: 1px solid var(--border); padding: 12px 22px; border-radius: 14px; text-align: center; min-width: 140px;">
+                    <div style="font-size: 10px; color: var(--text-dim); font-weight: 800;">NÚT BẮN TỐI ƯU</div>
+                    <div id="fireButtonVal" style="font-size: 26px; font-weight: 900; color: var(--super-red);">42%</div>
+                </div>
+            </div>
+
+            <div class="sliders-grid" id="slidersGrid"></div>
+
+            <button class="copy-btn" onclick="copySettings()">
+                📋 SAO CHÉP CẤU HÌNH ĐỘ NHẠY
+            </button>
+        </section>
+    </div>
+
+    <footer>
+        dép lào át min: 0352214296
+    </footer>
+
+    <script>
+        // Cấu hình được căn chỉnh độc lập hoàn toàn cho từng máy, loại bỏ thuật toán nhân tỉ lệ tuyến tính.
+        const db = [
+            { 
+                name: "iPhone 15 Pro Max", chip: "A17 Pro", screen: "6.7 inch OLED 120Hz", hz: "120Hz", dpi: "Gốc (100%)",
+                tiers: {
+                    normal: { gen: 172, red: 185, s2: 160, s4: 152, snip: 60, look: 110, fb: 48 },
+                    pro:    { gen: 160, red: 192, s2: 175, s4: 165, snip: 75, look: 130, fb: 44 },
+                    promax: { gen: 185, red: 168, s2: 180, s4: 158, snip: 82, look: 140, fb: 41 },
+                    super:  { gen: 165, red: 198, s2: 155, s4: 172, snip: 90, look: 150, fb: 39 }
+                }
+            },
+            { 
+                name: "iPhone XS Max", chip: "A12 Bionic", screen: "6.5 inch OLED 60Hz", hz: "60Hz", dpi: "Gốc (100%)",
+                tiers: {
+                    normal: { gen: 180, red: 175, s2: 168, s4: 160, snip: 65, look: 120, fb: 46 },
+                    pro:    { gen: 165, red: 195, s2: 182, s4: 170, snip: 80, look: 135, fb: 43 },
+                    promax: { gen: 192, red: 180, s2: 170, s4: 178, snip: 88, look: 145, fb: 40 },
+                    super:  { gen: 175, red: 200, s2: 162, s4: 185, snip: 95, look: 160, fb: 38 }
+                }
+            },
+            { 
+                name: "Samsung Galaxy S24 Ultra", chip: "Snapdragon 8 Gen 3", screen: "6.8 inch AMOLED 120Hz", hz: "120Hz", dpi: "411 DPI",
+                tiers: {
+                    normal: { gen: 168, red: 180, s2: 158, s4: 148, snip: 55, look: 105, fb: 49 },
+                    pro:    { gen: 155, red: 188, s2: 170, s4: 160, snip: 70, look: 125, fb: 45 },
+                    promax: { gen: 182, red: 165, s2: 178, s4: 152, snip: 80, look: 138, fb: 42 },
+                    super:  { gen: 162, red: 195, s2: 150, s4: 168, snip: 85, look: 148, fb: 40 }
+                }
+            },
+            { 
+                name: "Samsung Galaxy S4", chip: "Exynos 5 Octa 5410", screen: "5.0 inch Super AMOLED 60Hz", hz: "60Hz", dpi: "Gốc (100%)",
+                tiers: {
+                    normal: { gen: 190, red: 185, s2: 175, s4: 165, snip: 70, look: 130, fb: 45 },
+                    pro:    { gen: 175, red: 200, s2: 188, s4: 175, snip: 85, look: 140, fb: 42 },
+                    promax: { gen: 200, red: 190, s2: 180, s4: 185, snip: 90, look: 155, fb: 39 },
+                    super:  { gen: 182, red: 198, s2: 170, s4: 190, snip: 100, look: 170, fb: 37 }
+                }
+            }
+        ];
+
+        let curDev = null;
+        let curTier = 'super';
+
+        const meta = {
+            normal: { 
+                title: "1. THƯỜNG (Mượt - Dễ Quen)", 
+                badge: "Ổn Định Giữ Nhịp", 
+                desc: "Thông số đầm tay giúp góc nhìn mượt mà, hạn chế lệch tâm khi đảo góc nhìn đột ngột." 
+            },
+            pro: { 
+                title: "2. PRO (Đầm Tâm - Giảm Rung)", 
+                badge: "Cân Bằng Lực Vuốt", 
+                desc: "Tăng Red Dot riêng biệt để bám đầu trong khi hạ nhẹ Nhìn Quát để chống xòe đạn khi sấy dài." 
+            },
+            promax: { 
+                title: "3. PRO MAX (Cắt Lố - Bám Đầu)", 
+                badge: "Hãm Lực Tịnh Tiến", 
+                desc: "Đô nhạy cao ở Nhìn Quát giúp lướt nhanh nhưng Red Dot được hãm lực vừa đủ để dừng đúng điểm đỏ." 
+            },
+            super: { 
+                title: "4. SUPER (Ghim Tâm Full Đỏ)", 
+                badge: "Aimlock Chống Văng", 
+                desc: "Thiết lập Red Dot tiệm cận tối đa kết hợp nút bắn nhỏ để kéo dài hành trình tay, ghim chặt 100% đạn vào đầu." 
+            }
+        };
+
+        function handleInput(val) {
+            const box = document.getElementById('suggestionsBox');
+            if(!val.trim()) { box.style.display = 'none'; return; }
+            const q = val.toLowerCase();
+            const matches = db.filter(d => d.name.toLowerCase().includes(q) || d.chip.toLowerCase().includes(q));
+            
+            if(!matches.length) {
+                box.innerHTML = `<div class="suggestion-item" style="color:var(--text-dim)">Hệ thống tự động thiết lập cấu hình phi tuyến tính cho máy này.</div>`;
+            } else {
+                box.innerHTML = matches.map(m => `
+                    <div class="suggestion-item" onclick="selectDev('${m.name}')">
+                        <div><b>${m.name}</b><br><span style="font-size:11px; color:var(--text-dim)">${m.chip}</span></div>
+                        <span style="font-size:11px; background:rgba(255,0,60,0.12); color:var(--super-red); padding:3px 10px; border-radius:6px; font-weight:800;">Chọn</span>
+                    </div>
+                `).join('');
+            }
+            box.style.display = 'block';
+        }
+
+        function selectDev(name) {
+            document.getElementById('deviceInput').value = name;
+            document.getElementById('suggestionsBox').style.display = 'none';
+            analyzeDevice();
+        }
+
+        function analyzeDevice() {
+            const val = document.getElementById('deviceInput').value.trim();
+            if(!val) { alert('Vui lòng nhập tên thiết bị!'); return; }
+
+            let found = db.find(d => d.name.toLowerCase() === val.toLowerCase());
+            if(!found) {
+                // Tạo cấu hình phi tuyến tính tùy chỉnh nếu không có sẵn trong csdl
+                found = { 
+                    name: val, chip: "Octa-Core Custom Glass Engine", screen: "6.5 inch OLED", hz: "120Hz Touch", dpi: "Chuẩn Máy",
+                    tiers: {
+                        normal: { gen: 170, red: 182, s2: 160, s4: 150, snip: 60, look: 110, fb: 47 },
+                        pro:    { gen: 158, red: 190, s2: 172, s4: 162, snip: 75, look: 128, fb: 44 },
+                        promax: { gen: 184, red: 170, s2: 178, s4: 155, snip: 82, look: 138, fb: 41 },
+                        super:  { gen: 166, red: 196, s2: 152, s4: 170, snip: 90, look: 148, fb: 39 }
+                    }
+                };
+            }
+
+            curDev = found;
+            document.getElementById('verifiedDeviceName').innerText = found.name;
+            document.getElementById('specChip').innerText = found.chip;
+            document.getElementById('specScreen').innerText = found.screen;
+            document.getElementById('specHz').innerText = found.hz;
+            document.getElementById('specDpi').innerText = found.dpi;
+
+            document.getElementById('deviceStatusCard').style.display = 'flex';
+            document.getElementById('resultSection').classList.remove('hidden');
+
+            switchTier('super');
+        }
+
+        function switchTier(tier) {
+            curTier = tier;
+            document.querySelectorAll('.tier-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(`tab-${tier}`).classList.add('active');
+
+            const m = meta[tier];
+            document.getElementById('tierBadge').innerText = m.badge;
+            document.getElementById('tierTitle').innerText = m.title;
+            document.getElementById('tierDesc').innerText = m.desc;
+
+            const t = curDev.tiers[tier];
+            document.getElementById('fireButtonVal').innerText = `${t.fb}%`;
+
+            renderSliders(t);
+        }
+
+        function renderSliders(t) {
+            const items = [
+                { label: 'Nhìn Quát (General)', val: t.gen, desc: 'Tốc độ quay góc nhìn - Căn chỉnh chống giật khung hình' },
+                { label: 'Ngắm Điểm Đỏ (Red Dot)', val: t.red, desc: 'Lực nảy tâm kéo - Tối ưu ghim chặt điểm đỏ vùng đầu' },
+                { label: 'Ống Ngắm 2x (2x Scope)', val: t.s2, desc: 'Độ nhạy Scope 2x - Hãm lực chống văng đạn cự ly trung' },
+                { label: 'Ống Ngắm 4x (4x Scope)', val: t.s4, desc: 'Độ nhạy Scope 4x - Khóa tâm cố định cự ly xa' },
+                { label: 'Ống Ngắm AWM (Sniper)', val: t.snip, desc: 'Tốc độ vẫy sniper - Đầm tay khi rê ngắm' },
+                { label: 'Nhìn Xung Quanh (Free Look)', val: t.look, desc: 'Góc quay 360 độ quan sát xung quanh' }
+            ];
+
+            document.getElementById('slidersGrid').innerHTML = items.map(i => `
+                <div class="slider-card">
+                    <div class="slider-header">
+                        <span class="slider-title">${i.label}</span>
+                        <span class="slider-val">${i.val}</span>
+                    </div>
+                    <div class="slider-desc">${i.desc}</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${(i.val/200)*100}%"></div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function copySettings() {
+            if(!curDev) return;
+            const t = curDev.tiers[curTier];
+            const text = `=== FREE FIRE OB55 NON-LINEAR CONFIG ===\nThiết Bị: ${curDev.name}\nCấp Độ: ${meta[curTier].title}\n- Nhìn Quát: ${t.gen}\n- Red Dot: ${t.red}\n- Scope 2x: ${t.s2}\n- Scope 4x: ${t.s4}\n- Sniper: ${t.snip}\n- Nhìn Xung Quanh: ${t.look}\n- Nút Bắn Chuẩn: ${t.fb}%\n- DPI Đề Xuất: ${curDev.dpi}`;
+            navigator.clipboard.writeText(text);
+            alert('Đã sao chép cấu hình độ nhạy!');
+        }
+    </script>
+</body>
+</html>
